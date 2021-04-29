@@ -1,8 +1,4 @@
-l
-// use bindings::CliState::*;
 use crate::CliState;
-use crate::devices::doorlock::*;
-use crate::bindings::cli::*;
 use crate::bindings::message::*;
 use crate::devices::doorlock::DoorLock;
 use std::{thread, time};

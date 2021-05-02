@@ -12,15 +12,15 @@ pub struct CliState {
 impl CliState {
 
 	pub fn new() -> Self {
-		let (tx, rx) = mpsc::channel::<String>();
+		let (sender, receiver) = mpsc::channel::<String>();
 		thread::spawn(move || loop {
 			let mut buffer = String::new();
 			io::stdin().read_line(&mut buffer).unwrap();
-			tx.send(buffer).unwrap();
+			sender.send(buffer).unwrap();
 		});
 		
 		CliState {
-			stdin_channel: rx
+			stdin_channel: receiver
 		}
 	}
 	

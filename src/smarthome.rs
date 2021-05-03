@@ -1,7 +1,9 @@
 use crate::bindings::message::*;
 use crate::bindings::tcpserver::*;
+use crate::bindings::tcpconnection::*;
 use crate::devices::doorlock::DoorLock;
 use crate::bindings::cli::*;
+use std::option::*;
 
 use std::{thread, time};
 
@@ -13,13 +15,11 @@ fn sleep(millis: u64) {
 pub struct SmartHome {
     // bindings:
     cli: CliState,
-    tcp: TcpServer,
+    tcp_server: TcpServer,
+    tcp_connection: Option<TcpConnection>,
 
     // devices:
     doorlock: DoorLock
-
-    // doorlock: DoorLock,
-    // button: Button
 }
 
 impl SmartHome {
@@ -27,32 +27,50 @@ impl SmartHome {
     pub fn new() -> Self {
         return SmartHome {
             cli: CliState::new(),
-            tcp: TcpServer::new().unwrap(), // panic if failure
+            tcp_server: TcpServer::new().unwrap(), // panic if failure
+            tcp_connection: None,
             doorlock: DoorLock::new(),
         };
     }
-  
+    
     pub fn start(&mut self) {
         loop {
             
+            // receive messages from all bindings and process them
+
             let mut message = self.cli.fetch();
             
-            self.process_messages(message);
+            self.process_message(message);
             
-            message = self.tcp.fetch();
+            message = self.tcp_server.fetch();
 
-            self.process_messages(message);
+            self.process_message(message);
+            
+            if let Some(connection) = &mut self.tcp_connection {
+                message = connection.fetch();
+                
+                self.process_message(message);
+            }
 
             sleep(100);
         }
     }
 
-    fn process_messages(&mut self, message: Message) {
+    fn process_message(&mut self, message: Message) {
         match message {
             Message::KeyPressed => self.doorlock.toggle(),
-            Message::TcpListenerAccept(_stream, _addr) => println!("new connection"),
-            Message::None => {}
+            Message::TcpListenerAccept(stream, addr) => {
+                println!("new connection at {}", addr);
+                self.tcp_connection = Some(TcpConnection::new(stream).unwrap())
+            },
+            Message::TcpEnd => {
+                println!("connection end");
+                self.tcp_connection = None;
+            },
+            Message::TcpRead(size, vec) => println!("receive {:?} bytes: {:?}", size, vec),
+
+            Message::None => {},
         }
-        sleep(1000);
+        sleep(100);
     }
 }

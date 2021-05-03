@@ -1,8 +1,13 @@
 use std::net::{TcpStream, SocketAddr};
+use std::vec::Vec;
 
-// message that can be fetched from all bindings
+// Messages that can be fetched from all bindings
+// Those messages are events
 pub enum Message {
   None,
   KeyPressed,
+  
   TcpListenerAccept(TcpStream, SocketAddr),
+  TcpRead(usize, Vec<u8>),
+  TcpEnd,
 }

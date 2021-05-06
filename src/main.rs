@@ -2,8 +2,6 @@ mod smarthome;
 mod bindings;
 mod devices;
 
-use crate::bindings::cli::*;
-
 use crate::smarthome::*;
 
 fn main() {

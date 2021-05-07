@@ -1,11 +1,10 @@
-pub struct DoorLock {is_open: bool}
+pub struct DoorLock {
+    is_open: bool,
+}
 
 impl DoorLock {
-
     pub fn new() -> Self {
-        DoorLock {
-            is_open: false,
-        }
+        DoorLock { is_open: false }
     }
 
     pub fn open(&mut self) {
@@ -19,7 +18,7 @@ impl DoorLock {
     pub fn toggle(&mut self) {
         if self.is_open {
             self.close();
-        }else{
+        } else {
             self.open();
         }
     }

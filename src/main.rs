@@ -1,6 +1,6 @@
-mod smarthome;
 mod bindings;
 mod devices;
+mod smarthome;
 
 use crate::smarthome::*;
 

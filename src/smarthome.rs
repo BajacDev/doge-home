@@ -1,8 +1,8 @@
-use crate::bindings::message::*;
-use crate::bindings::tcpserver::*;
-use crate::bindings::tcpconnection::*;
-use crate::devices::doorlock::DoorLock;
 use crate::bindings::cli::*;
+use crate::bindings::message::*;
+use crate::bindings::tcpconnection::*;
+use crate::bindings::tcpserver::*;
+use crate::devices::doorlock::DoorLock;
 use std::option::*;
 
 use std::{thread, time};
@@ -19,11 +19,10 @@ pub struct SmartHome {
     tcp_connection: Option<TcpConnection>,
 
     // devices:
-    doorlock: DoorLock
+    doorlock: DoorLock,
 }
 
 impl SmartHome {
-
     pub fn new() -> Self {
         return SmartHome {
             cli: CliState::new(),
@@ -32,23 +31,22 @@ impl SmartHome {
             doorlock: DoorLock::new(),
         };
     }
-    
+
     pub fn start(&mut self) {
         loop {
-            
             // receive messages from all bindings and process them
 
             let mut message = self.cli.fetch();
-            
+
             self.process_message(message);
-            
+
             message = self.tcp_server.fetch();
 
             self.process_message(message);
-            
+
             if let Some(connection) = &mut self.tcp_connection {
                 message = connection.fetch();
-                
+
                 self.process_message(message);
             }
 
@@ -62,14 +60,14 @@ impl SmartHome {
             Message::TcpListenerAccept(stream, addr) => {
                 println!("new connection at {}", addr);
                 self.tcp_connection = Some(TcpConnection::new(stream).unwrap())
-            },
+            }
             Message::TcpEnd => {
                 println!("connection end");
                 self.tcp_connection = None;
-            },
+            }
             Message::TcpRead(size, vec) => println!("receive {:?} bytes: {:?}", size, vec),
 
-            Message::None => {},
+            Message::None => {}
         }
         sleep(100);
     }

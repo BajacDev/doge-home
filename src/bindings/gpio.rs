@@ -11,8 +11,7 @@ pub enum GpioPinAvailable {
 }
 
 impl GpioPinAvailable {
-    /// Return the BCM GPIO pin number of [GpioPinAvailable]
-    ///
+    /// Return the BCM GPIO pin number of [GpioPinAvailable].
     fn to_bcm_gpio_pin_number(&self) -> u8 {
         match *self {
             //TODO map to the right bcm that we use
@@ -27,15 +26,15 @@ pub struct GpioPin {
 }
 
 impl GpioPin {
-        /// Create a GpioPin
+    /// Create a GpioPin.
     ///
     /// Create the GpioPin associated with the passed GpioPinAvailable, or throw a error.
-    /// See enum type Error of rppal::gpio::Gpio
+    /// See enum type Error of rppal::gpio::Gpio.
     ///
     /// ### Examples
     ///
-    /// new(GpioPinAvailable::GPio0)
-    pub fn new(gpio_pin_wanted : &GpioPinAvailable) -> Result<GpioPin, Error> {
+    /// let gpio_pin_0 = new(GpioPinAvailable::GPio0);
+    pub fn new(gpio_pin_wanted: &GpioPinAvailable) -> Result<GpioPin, Error> {
         let mut output_pin = Gpio::new()?
             .get(gpio_pin_wanted.to_bcm_gpio_pin_number())?
             .into_output();
@@ -45,20 +44,20 @@ impl GpioPin {
         })
     }
 
-    /// Turn the gpio on, i.e. let the current pass
+    /// Turn the gpio on, i.e. let the current pass.
     ///
     /// ### Examples
     ///
-    /// gpio_pin.on()
+    /// gpio_pin.on();
     pub fn on(&mut self) {
         self.gpio_pin.set_high();
     }
 
-    /// Turn the gpio off, i.e. do not let the current pass
+    /// Turn the gpio off, i.e. do not let the current pass.
     ///
     /// ### Examples
     ///
-    /// gpio_pin.off()
+    /// gpio_pin.off();
     pub fn off(&mut self) {
         self.gpio_pin.is_set_high();
     }

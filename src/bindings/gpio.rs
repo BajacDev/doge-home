@@ -11,24 +11,6 @@ pub enum GpioPinAvailable {
 }
 
 impl GpioPinAvailable {
-    /// Create a GpioPin
-    ///
-    /// Create the GpioPin associated with the caller GpioPinAvailable, or throw a error.
-    /// See enum type Error of rppal::gpio::Gpio
-    ///
-    /// ### Examples
-    ///
-    /// gpio_pin_avaialable.new()
-    pub fn new(&self) -> Result<GpioPin, Error> {
-        let mut output_pin = Gpio::new()?
-            .get(self.to_bcm_gpio_pin_number())?
-            .into_output();
-        output_pin.set_reset_on_drop(false);
-        Ok(GpioPin {
-            gpio_pin: output_pin,
-        })
-    }
-
     /// Return the BCM GPIO pin number of [GpioPinAvailable]
     ///
     fn to_bcm_gpio_pin_number(&self) -> u8 {
@@ -45,6 +27,24 @@ pub struct GpioPin {
 }
 
 impl GpioPin {
+        /// Create a GpioPin
+    ///
+    /// Create the GpioPin associated with the passed GpioPinAvailable, or throw a error.
+    /// See enum type Error of rppal::gpio::Gpio
+    ///
+    /// ### Examples
+    ///
+    /// new(GpioPinAvailable::GPio0)
+    pub fn new(gpio_pin_wanted : &GpioPinAvailable) -> Result<GpioPin, Error> {
+        let mut output_pin = Gpio::new()?
+            .get(gpio_pin_wanted.to_bcm_gpio_pin_number())?
+            .into_output();
+        output_pin.set_reset_on_drop(false);
+        Ok(GpioPin {
+            gpio_pin: output_pin,
+        })
+    }
+
     /// Turn the gpio on, i.e. let the current pass
     ///
     /// ### Examples

@@ -1,5 +1,6 @@
 use rppal::gpio::Error;
 use rppal::gpio::Gpio;
+use rppal::gpio::OutputPin;
 use std::result::Result::*;
 /// The enum type representing the avaiable Gpio
 /// .
@@ -10,6 +11,24 @@ pub enum GpioPinAvailable {
 }
 
 impl GpioPinAvailable {
+    /// Create a GpioPin
+    ///
+    /// Create the GpioPin associated with the caller GpioPinAvailable, or throw a error.
+    /// See enum type Error of rppal::gpio::Gpio
+    ///
+    /// ### Examples
+    ///
+    /// gpio_pin_avaialable.new()
+    pub fn new(&self) -> Result<GpioPin, Error> {
+        let mut output_pin = Gpio::new()?
+            .get(self.to_bcm_gpio_pin_number())?
+            .into_output();
+        output_pin.set_reset_on_drop(false);
+        Ok(GpioPin {
+            gpio_pin: output_pin,
+        })
+    }
+
     /// Return the BCM GPIO pin number of [GpioPinAvailable]
     ///
     fn to_bcm_gpio_pin_number(&self) -> u8 {
@@ -19,43 +38,28 @@ impl GpioPinAvailable {
             GpioPinAvailable::Gpio1 => 1,
         }
     }
+}
 
+pub struct GpioPin {
+    gpio_pin: OutputPin,
+}
+
+impl GpioPin {
     /// Turn the gpio on, i.e. let the current pass
     ///
     /// ### Examples
-    /// use crate::bindings::gpio;
     ///
-    /// gpio::GpioPinAvailable::Gpio0.on()*
-    pub fn on(&self) -> Result<(), Error> {
-        GpioPinAvailable::turn_on(self.to_bcm_gpio_pin_number())
-    }
-
-    /// Turn on the gpio
-    ///
-    /// *'pinNumber': The BCM GPIO pin number of the gpio to turn on
-    fn turn_on(pin_number: u8) -> Result<(), Error> {
-        let mut pin = Gpio::new()?.get(pin_number)?.into_output();
-        pin.set_high();
-        pin.set_reset_on_drop(false);
-        Ok(())
+    /// gpio_pin.on()
+    pub fn on(&mut self) {
+        self.gpio_pin.set_high();
     }
 
     /// Turn the gpio off, i.e. do not let the current pass
     ///
     /// ### Examples
-    /// use crate::bindings::gpio;
     ///
-    /// gpio::GpioPinAvailable::Gpio0.off()
-    fn off(&self) -> Result<(), Error> {
-        GpioPinAvailable::turn_off(self.to_bcm_gpio_pin_number())
-    }
-    /// Turn off the gpio
-    ///
-    /// *'pinNumber': The BCM GPIO pin number of the gpio to turn off
-    fn turn_off(pin_number: u8) -> Result<(), Error> {
-        let mut pin = Gpio::new()?.get(pin_number)?.into_output();
-        pin.set_high();
-        pin.set_reset_on_drop(false);
-        Ok(())
+    /// gpio_pin.off()
+    pub fn off(&mut self) {
+        self.gpio_pin.is_set_high();
     }
 }

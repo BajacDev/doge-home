@@ -27,7 +27,7 @@ pub struct GpioPin {
 }
 
 impl GpioPin {
-        /// Create a GpioPin
+    /// Create a GpioPin
     ///
     /// Create the GpioPin associated with the passed GpioPinAvailable, or throw a error.
     /// See enum type Error of rppal::gpio::Gpio
@@ -35,7 +35,7 @@ impl GpioPin {
     /// ### Examples
     ///
     /// new(GpioPinAvailable::GPio0)
-    pub fn new(gpio_pin_wanted : &GpioPinAvailable) -> Result<GpioPin, Error> {
+    pub fn new(gpio_pin_wanted: &GpioPinAvailable) -> Result<GpioPin, Error> {
         let mut output_pin = Gpio::new()?
             .get(gpio_pin_wanted.to_bcm_gpio_pin_number())?
             .into_output();

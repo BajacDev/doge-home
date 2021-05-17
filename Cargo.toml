@@ -14,13 +14,15 @@ libc = "0.2"
 [dependencies.klee-sys]
 git = "https://gitlab.henriktjader.com/pln/klee-sys.git"
 version = "0.2.0"
+optional = true
 
 [dependencies.panic-klee]
 git = "https://gitlab.henriktjader.com/pln/panic-klee.git"
 version = "0.1.0"
+optional = true
 
 [features]
-klee-analysis = ["klee-sys/klee-analysis"]
+klee-analysis = ["klee-sys/klee-analysis", "klee-sys", "panic-klee"]
 
 [profile.dev]
 panic = "abort"

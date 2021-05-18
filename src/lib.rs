@@ -1,3 +1,7 @@
+pub mod bindings;
+pub mod devices;
+pub mod smarthome;
+
 #[cfg(test)]
 mod tests {
     #[test]

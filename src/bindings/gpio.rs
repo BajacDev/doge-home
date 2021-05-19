@@ -2,6 +2,8 @@ use rppal::gpio::Error;
 use rppal::gpio::Gpio;
 use rppal::gpio::OutputPin;
 use std::result::Result::*;
+pub mod mem;
+
 /// The enum type representing the avaiable Gpio
 /// .
 /// Each enum value is a Gpio that we can use in our project
@@ -18,47 +20,5 @@ impl GpioPinAvailable {
             GpioPinAvailable::Gpio0 => 0,
             GpioPinAvailable::Gpio1 => 1,
         }
-    }
-}
-
-pub struct GpioPin {
-    gpio_pin: OutputPin,
-}
-
-impl GpioPin {
-    /// Create a GpioPin.
-    ///
-    /// Create the GpioPin associated with the passed GpioPinAvailable, or throw a error.
-    /// See enum type Error of rppal::gpio::Gpio.
-    ///
-    /// ### Examples
-    ///
-    /// let gpio_pin_0 = new(GpioPinAvailable::GPio0);
-    pub fn new(gpio_pin_wanted: &GpioPinAvailable) -> Result<GpioPin, Error> {
-        let mut output_pin = Gpio::new()?
-            .get(gpio_pin_wanted.to_bcm_gpio_pin_number())?
-            .into_output();
-        output_pin.set_reset_on_drop(false);
-        Ok(GpioPin {
-            gpio_pin: output_pin,
-        })
-    }
-
-    /// Turn the gpio on, i.e. let the current pass.
-    ///
-    /// ### Examples
-    ///
-    /// gpio_pin.on();
-    pub fn on(&mut self) {
-        self.gpio_pin.set_high();
-    }
-
-    /// Turn the gpio off, i.e. do not let the current pass.
-    ///
-    /// ### Examples
-    ///
-    /// gpio_pin.off();
-    pub fn off(&mut self) {
-        self.gpio_pin.is_set_high();
     }
 }

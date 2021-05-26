@@ -1,30 +1,40 @@
 //! Implementation of a memory map, which is not thread safe. i.e. the use of this should only come from on thread.
 //! This is a design choices made to use the minimum amount of abstraction, even from rust.
-//! 
+//!
 //! It is implemented for the rasbpery pi 4b (BCM2711).
 //! See https://datasheets.raspberrypi.org/bcm2711/bcm2711-peripherals.pdf for more information on the chip
+use crate::bindings::gpio::GpioOutputPin;
 use std::fs::OpenOptions;
 use std::os::unix::fs::OpenOptionsExt;
 use std::os::unix::io::AsRawFd;
 use std::ptr;
-use crate::bindings::gpio::GpioPinAvailable;
 
 use libc::{self, c_void, size_t, MAP_FAILED, MAP_SHARED, O_SYNC, PROT_READ, PROT_WRITE};
-
 
 const PATH_DEV_GPIOMEM: &str = "/dev/gpiomem";
 /// The BCM2711 (RPi4) has 58 32-bit registers related to the GPIO. However for simpliciy I will only implement 32.
 
-const GPIO_MEM_REGISTERS: usize = 32;
-const GPIO_MEM_SIZE: usize = GPCLR0 + (GPIO_MEM_REGISTERS/std::mem::size_of::<u32>() + if (GPIO_MEM_REGISTERS%std::mem::size_of::<u32>()!=0) {1} else {0} );
-const REGISTERS_SIZE : usize = 32;
+const GPIO_NBRS: usize = 32;
+const GPIO_MEM_SIZE: usize = GPCLR0
+    + (GPIO_NBRS / std::mem::size_of::<u32>()
+        + if (GPIO_NBRS % std::mem::size_of::<u32>() != 0) {
+            1
+        } else {
+            0
+        });
+const REGISTERS_SIZE: usize = 32;
 /// GPIO Function Select 0
 const GPFSEL0: usize = 0x00;
+const GPFSEL_NUMBER_PIN_PER_REGISTER: usize = 10;
 /// GPIO Pin Output Set 0
 const GPSET0: usize = 0x1c;
+const GPSET_NUMBER_PIN_PER_REGISTER: usize = 32;
 /// GPIO Pin Output Clear 0
 const GPCLR0: usize = 0x28;
+const GPCLR_NUMBER_PIN_PER_REGISTER: usize = 32;
+const OUTPUT_MODE_BITS_CONFIGURATION: u32 = 0b001;
 
+static mut GPIO_CONTROLLER_ACCESS_CONTROLLER: Option<GpioController> = Some(GpioController::open());
 
 
 pub struct GpioController {
@@ -33,13 +43,24 @@ pub struct GpioController {
 }
 
 impl GpioController {
-    pub fn open() -> GpioController {
+    //TODO documentation with panic field 
+    pub fn get_the_gpio_controller() -> GpioController {
+        // Will panic if we try to get multiple instance of GpioController
+        let gpio_controller = unsafe {
+            GPIO_CONTROLLER_ACCESS_CONTROLLER
+                .expect("Try to obtain multiple GpioController")
+        };
+        unsafe { GPIO_CONTROLLER_ACCESS_CONTROLLER = None };
+        gpio_controller
+    }
+
+    fn open() -> GpioController {
         // Try /dev/gpiomem first. If that fails, try /dev/mem instead. If neither works,
         // report back the error that's the most relevant.
-        //TODO write it so that it is a singleton panic if ask for one but already exist one, 
+        //TODO write it so that it is a singleton panic if ask for one but already exist one,
         // indead there should be only one so that we are sure there is no concurency, we force it
         let mem_ptr = Self::map_devgpiomem();
-        GpioController{mem_ptr}
+        GpioController { mem_ptr: mem_ptr }
     }
 
     /// map the gpio register to the user space virtual addresses
@@ -53,8 +74,8 @@ impl GpioController {
             .read(true)
             .write(true)
             .custom_flags(O_SYNC)
-            .open(PATH_DEV_GPIOMEM).expect("Problem opening the file /dev/gpiomem");
-        
+            .open(PATH_DEV_GPIOMEM)
+            .expect("Problem opening the file /dev/gpiomem");
         // Memory-map /dev/gpiomem at offset 0
         let gpiomem_ptr = unsafe {
             libc::mmap(
@@ -74,6 +95,10 @@ impl GpioController {
         gpiomem_ptr as *mut u32
     }
 
+    #[inline(always)]
+    fn read(&self, offset: usize) -> u32 {
+        unsafe { ptr::read_volatile(self.mem_ptr.add(offset)) }
+    }
 
     /// Write without reordering by the the compiler or cpu in respect to other volatile operation
     #[inline(always)]
@@ -83,26 +108,36 @@ impl GpioController {
         }
     }
 
-
     /// Set the pin to high
     #[inline(always)]
-    pub fn set_high(& mut self, gpio_pin_available : GpioPinAvailable) {
-        let offset = (GPSET0 + gpio_pin_available.to_bcm_gpio_pin_number() as usize) / REGISTERS_SIZE;
-        let shift = gpio_pin_available.to_bcm_gpio_pin_number() % REGISTERS_SIZE as u8;
-
+    pub fn set_high(&self, gpio_pin: &mut GpioOutputPin) {
+        let offset =
+            (GPSET0 + gpio_pin.BCM_GPIO_pin_number as usize) / GPSET_NUMBER_PIN_PER_REGISTER;
+        let shift = gpio_pin.BCM_GPIO_pin_number % GPSET_NUMBER_PIN_PER_REGISTER ;
         self.write(offset, 1 << shift);
     }
-
 
     /// Set the pin to low
     #[inline(always)]
-    pub fn set_low(& mut self, gpio_pin_available : GpioPinAvailable) {
-        let offset = (GPCLR0 + gpio_pin_available.to_bcm_gpio_pin_number() as usize)/ REGISTERS_SIZE;
-        let shift = gpio_pin_available.to_bcm_gpio_pin_number() % REGISTERS_SIZE as u8;
+    pub fn set_low(&self, gpio_pin: &mut GpioOutputPin) {
+        let offset =
+            (GPCLR0 + gpio_pin.BCM_GPIO_pin_number) / GPCLR_NUMBER_PIN_PER_REGISTER;
+        let shift = gpio_pin.BCM_GPIO_pin_number % GPCLR_NUMBER_PIN_PER_REGISTER ;
 
         self.write(offset, 1 << shift);
     }
 
+    #[inline(always)]
+    pub fn setOutputMode(&mut self, gpio_pin: &mut GpioOutputPin) {
+        let offset =
+            (GPFSEL0 + gpio_pin.BCM_GPIO_pin_number as usize) / GPFSEL_NUMBER_PIN_PER_REGISTER;
+        let shift = (gpio_pin.BCM_GPIO_pin_number % GPFSEL_NUMBER_PIN_PER_REGISTER) * 3;
+        let reg_value = self.read(offset);
+        self.write(
+            offset,
+            (reg_value & !(0b111 << shift)) | ((OUTPUT_MODE_BITS_CONFIGURATION) << shift),
+        );
+    }
 
     //TODO check that gpio pull up pull down is not needed, maybe check rppal to see if they use it for pin
 }

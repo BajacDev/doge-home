@@ -2,6 +2,7 @@ use rppal::gpio::Error;
 use rppal::gpio::Gpio;
 use rppal::gpio::OutputPin;
 use std::result::Result::*;
+pub mod output_pin;
 pub mod mem;
 
 /// The enum type representing the avaiable Gpio

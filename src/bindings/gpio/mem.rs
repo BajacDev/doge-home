@@ -1,4 +1,6 @@
-//! Implementation of a memory map, which is not multiple thread safe. i.e. the use of this should only come from on thread
+//! Implementation of a memory map, which is not thread safe. i.e. the use of this should only come from on thread.
+//! This is a design choices made to use the minimum amount of abstraction, even from rust.
+//! 
 //! It is implemented for the rasbpery pi 4b (BCM2711).
 //! See https://datasheets.raspberrypi.org/bcm2711/bcm2711-peripherals.pdf for more information on the chip
 use std::fs::OpenOptions;
@@ -15,11 +17,18 @@ const PATH_DEV_GPIOMEM: &str = "/dev/gpiomem";
 
 const GPIO_MEM_REGISTERS: usize = 32;
 const GPIO_MEM_SIZE: usize = GPCLR0 + (GPIO_MEM_REGISTERS/std::mem::size_of::<u32>() + if (GPIO_MEM_REGISTERS%std::mem::size_of::<u32>()!=0) {1} else {0} );
+const REGISTERS_SIZE : usize = 32;
+/// GPIO Function Select 0
 const GPFSEL0: usize = 0x00;
+/// GPIO Pin Output Set 0
 const GPSET0: usize = 0x1c;
+/// GPIO Pin Output Clear 0
 const GPCLR0: usize = 0x28;
 
+
+
 pub struct GpioController {
+    /// A u32 pointer, as registers or of size x pointer should be ux
     mem_ptr: *mut u32,
 }
 
@@ -65,11 +74,6 @@ impl GpioController {
         gpiomem_ptr as *mut u32
     }
 
-    /// Read without reordering by the compiler in respect to other volatile operation
-    #[inline(always)]
-    fn read(&self, offset: usize) -> u32 {
-        unsafe { ptr::read_volatile(self.mem_ptr.add(offset)) }
-    }
 
     /// Write without reordering by the the compiler or cpu in respect to other volatile operation
     #[inline(always)]
@@ -83,8 +87,8 @@ impl GpioController {
     /// Set the pin to high
     #[inline(always)]
     pub fn set_high(& mut self, gpio_pin_available : GpioPinAvailable) {
-        let offset = (GPSET0 + gpio_pin_available.to_bcm_gpio_pin_number() as usize) / 32;
-        let shift = gpio_pin_available.to_bcm_gpio_pin_number() % 32;
+        let offset = (GPSET0 + gpio_pin_available.to_bcm_gpio_pin_number() as usize) / REGISTERS_SIZE;
+        let shift = gpio_pin_available.to_bcm_gpio_pin_number() % REGISTERS_SIZE as u8;
 
         self.write(offset, 1 << shift);
     }
@@ -93,8 +97,8 @@ impl GpioController {
     /// Set the pin to low
     #[inline(always)]
     pub fn set_low(& mut self, gpio_pin_available : GpioPinAvailable) {
-        let offset = (GPCLR0 + gpio_pin_available.to_bcm_gpio_pin_number() as usize)/ 32;
-        let shift = gpio_pin_available.to_bcm_gpio_pin_number() % 32;
+        let offset = (GPCLR0 + gpio_pin_available.to_bcm_gpio_pin_number() as usize)/ REGISTERS_SIZE;
+        let shift = gpio_pin_available.to_bcm_gpio_pin_number() % REGISTERS_SIZE as u8;
 
         self.write(offset, 1 << shift);
     }

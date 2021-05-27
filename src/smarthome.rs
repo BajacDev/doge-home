@@ -1,4 +1,5 @@
 use crate::bindings::cli::*;
+use crate::bindings::gpio::gpio_controller::GpioController;
 use crate::bindings::gpio::*;
 use crate::bindings::message::*;
 use crate::bindings::tcpconnection::*;
@@ -19,19 +20,22 @@ pub struct SmartHome {
     cli: CliState,
     tcp_server: TcpServer,
     tcp_connection: Option<TcpConnection>,
-
+    gpio_controller: GpioController,
     // devices:
     doorlock: DoorLock,
 }
 
 impl SmartHome {
     pub fn new() -> Result<Self, Error> {
-        let gpio_pin = GpioPin::new(&GpioPinAvailable::Gpio0)?;
+        let mut gpio_controller = GpioController::get_the_gpio_controller();
+        let gpio_output_pin =
+            GpioOutputPin::new(GpioPin::new(&GpioPinAvailable::Gpio0), &mut gpio_controller);
         return Ok(SmartHome {
             cli: CliState::new(),
             tcp_server: TcpServer::new().unwrap(), // panic if failure
             tcp_connection: None,
-            doorlock: DoorLock::new(gpio_pin),
+            gpio_controller: gpio_controller,
+            doorlock: DoorLock::new(gpio_output_pin),
         });
     }
 
@@ -59,7 +63,7 @@ impl SmartHome {
 
     fn process_message(&mut self, message: Message) {
         match message {
-            Message::KeyPressed => self.doorlock.toggle(),
+            Message::KeyPressed => self.doorlock.toggle(&mut self.gpio_controller),
             Message::TcpListenerAccept(stream, addr) => {
                 println!("new connection at {}", addr);
                 self.tcp_connection = Some(TcpConnection::new(stream).unwrap())

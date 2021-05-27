@@ -21,6 +21,7 @@ impl GpioPinAvailable {
     }
 }
 
+//TODO implement drop so that the user may reuse a pin if needed 
 pub struct GpioPin{
     BCM_GPIO_pin_number : usize
 }
@@ -53,7 +54,7 @@ impl GpioOutputPin {
     /// let gpio_pin_0 = new(GpioPinAvailable::GPio0);
     pub fn new(gpio_pin: GpioPin,  gpio_controller : &mut GpioController) -> GpioOutputPin {
         let mut gpio_output_pin = GpioOutputPin{BCM_GPIO_pin_number : gpio_pin.BCM_GPIO_pin_number};
-        gpio_controller.setOutputMode(& mut gpio_output_pin);
+        gpio_controller.set_output_mode(& mut gpio_output_pin);
         gpio_output_pin
     }
 }

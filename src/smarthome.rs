@@ -5,8 +5,6 @@ use crate::bindings::message::*;
 use crate::bindings::tcpconnection::*;
 use crate::bindings::tcpserver::*;
 use crate::devices::doorlock::DoorLock;
-use rppal::gpio::Error;
-use std::result::Result::*;
 
 use std::{thread, time};
 
@@ -26,17 +24,17 @@ pub struct SmartHome {
 }
 
 impl SmartHome {
-    pub fn new() -> Result<Self, Error> {
+    pub fn new() -> SmartHome {
         let mut gpio_controller = GpioController::get_the_gpio_controller();
         let gpio_output_pin =
             GpioOutputPin::new(GpioPin::new(&GpioPinAvailable::Gpio0), &mut gpio_controller);
-        return Ok(SmartHome {
+        return SmartHome {
             cli: CliState::new(),
             tcp_server: TcpServer::new().unwrap(), // panic if failure
             tcp_connection: None,
             gpio_controller: gpio_controller,
             doorlock: DoorLock::new(gpio_output_pin),
-        });
+        };
     }
 
     pub fn start(&mut self) {

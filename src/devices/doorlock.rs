@@ -1,8 +1,9 @@
-use crate::bindings::gpio::GpioPin;
+use crate::bindings::gpio::gpio_controller::GpioController;
+use crate::bindings::gpio::GpioOutputPin;
 
 pub struct DoorLock {
     is_open: bool,
-    gpio: GpioPin,
+    gpio_output_pin: GpioOutputPin,
 }
 
 impl DoorLock {
@@ -11,10 +12,10 @@ impl DoorLock {
     /// ### Examples
     ///
     /// let mut door_lock = new(gpio_pin);
-    pub fn new(gpio_pin: GpioPin) -> Self {
+    pub fn new(gpio_pin_ouput: GpioOutputPin) -> Self {
         DoorLock {
             is_open: false,
-            gpio: gpio_pin,
+            gpio_output_pin: gpio_pin_ouput,
         }
     }
 
@@ -23,9 +24,9 @@ impl DoorLock {
     /// ### Examples
     ///
     /// new(gpio_pin).open();
-    pub fn open(&mut self) {
+    pub fn open(&mut self, gpio_controller: &mut GpioController) {
         self.is_open = true;
-        self.gpio.on();
+        gpio_controller.set_high(&mut self.gpio_output_pin);
     }
 
     /// Close the DoorLock on which it is called.
@@ -34,9 +35,9 @@ impl DoorLock {
     ///
     ///
     /// new(gpio_pin).close();
-    pub fn close(&mut self) {
+    pub fn close(&mut self, gpio_controller: &mut GpioController) {
         self.is_open = false;
-        self.gpio.off();
+        gpio_controller.set_low(&mut self.gpio_output_pin);
     }
 
     /// Toggle the DoorLock on which it is called
@@ -47,11 +48,11 @@ impl DoorLock {
     /// ### Examples
     ///
     /// new(gpio_pin).toggle();
-    pub fn toggle(&mut self) {
+    pub fn toggle(&mut self, gpio_controller: &mut GpioController) {
         if self.is_open {
-            self.close();
+            self.close(gpio_controller);
         } else {
-            self.open();
+            self.open(gpio_controller);
         }
     }
 }

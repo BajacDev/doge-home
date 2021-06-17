@@ -3,24 +3,50 @@ use gpio_controller::GpioController;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::assert;
 
-/// The enum type representing the avaiable Gpio
+/// The enum type representing the avaiable Gpio for the rasbperry pi 4b.
 ///
-/// Each enum value is a Gpio that you can use
+/// Each enum value is a Gpio that you can use in the rasbperry pi 4b.
 ///
-// If you change the enum variant make sure to assign a integer x that respect 0 <= x < [mem::GPIO_SUPPORTED_NBRS].
+// You should not change the enum variant as it resepct the bcm number convention of the board, so it is meaningull and well established.
+// Otherwise it might confuse future user and reader of this binding.
+// If you want to change the number assigned to each enum variant, then you should change the to_bcm_pin_number as it rely on that.
+// We did not put Gpio0 and Gpio1 as it is stated that these pins ares reserverd for HAT ID EEPROM see https://www.raspberrypi.org/documentation/hardware/raspberrypi/bcm2711/rpi_DATA_2711_1p0_preliminary.pdf last seen on 17 june 2021.
 #[derive(Copy, Clone)]
 pub enum GpioPinAvailable {
-    Gpio0 = 0,
-    Gpio1 = 1,
+    Gpio2 = 2,
+    Gpio3 = 3,
+    Gpio4 = 4,
+    Gpio17 = 17,
+    Gpio27 = 27,
+    Gpio22 = 22,
+    Gpio10 = 10,
+    Gpio9 = 9,
+    Gpio11 = 11,
+    Gpio5 = 5,
+    Gpio6 = 6,
+    Gpio13 = 13,
+    Gpio19 = 19,
+    Gpio26 = 26,
+    Gpio14 = 14,
+    Gpio15 = 15,
+    Gpio18 = 18,
+    Gpio23 = 23,
+    Gpio24 = 24,
+    Gpio25 = 25,
+    Gpio8 = 8,
+    Gpio7 = 7,
+    Gpio12 = 12,
+    Gpio16 = 16,
+    Gpio20 = 20,
+    Gpio21 = 21
 }
 
 impl GpioPinAvailable {
     /// Return the BCM GPIO pin number of [GpioPinAvailable].
     fn to_bcm_gpio_pin_number(&self) -> usize {
         let bcm_pin_number : usize = (*self) as usize;
-        //TODO finish the check if possible ..
-        assert!(bcm_pin_number<)
-        
+        assert!(bcm_pin_number<=gpio_controller::GPIO_MAX_BCM_NUMBER_SUPPORTED);
+        bcm_pin_number
     }
 }
 
@@ -37,7 +63,7 @@ pub struct GpioPin {
 // We don't need that much atomic boolean as their is less GPIO avaiable on the rasbpery pi but
 // it is for simplicity. With this number of atomic boolean we can simply assign a GPIO the atomic boolean
 // at the position corresponding to his bcm number
-const GPIO_PINS_IS_TAKEN: [AtomicBool; gpio_controller::GPIO_MAX_BCM_NUMBER] = [
+const GPIO_PINS_IS_TAKEN: [AtomicBool; gpio_controller::GPIO_MAX_BCM_NUMBER_SUPPORTED] = [
     AtomicBool::new(false),
     AtomicBool::new(false),
     AtomicBool::new(false),

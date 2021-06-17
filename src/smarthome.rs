@@ -24,7 +24,6 @@ pub struct SmartHome {
 }
 
 impl SmartHome {
-
     pub fn new() -> SmartHome {
         let mut gpio_controller = GpioController::get_the_gpio_controller();
         let gpio_output_pin = GpioOutputPin::new(

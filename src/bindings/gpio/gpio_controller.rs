@@ -19,11 +19,11 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use libc::{self, c_void, size_t, MAP_FAILED, MAP_SHARED, O_SYNC, PROT_READ, PROT_WRITE};
 
 const PATH_DEV_GPIOMEM: &str = "/dev/gpiomem";
-// The BCM2711 (RPi4) has 58 32-bit registers related to the GPIO. However for simplicity I will only implement 32.
-pub const GPIO_SUPPORTED_NBRS: usize = 32;
+// The rasbperry pi has as the max bcm number for a GPIO that it offer 27. This should not confuse with what the BCM2711 offer.
+pub const GPIO_MAX_BCM_NUMBER : usize = 27;
 const GPIO_MEM_SIZE_REQUIRED_FROM_GLOBAL_OFFSET: usize = GPCLR0_OFFSET
-    + (GPIO_SUPPORTED_NBRS / std::mem::size_of::<u32>()
-        + if GPIO_SUPPORTED_NBRS % std::mem::size_of::<u32>() != 0 {
+    + (GPIO_MAX_BCM_NUMBER / std::mem::size_of::<u32>()
+        + if GPIO_MAX_BCM_NUMBER % std::mem::size_of::<u32>() != 0 {
             1
         } else {
             0

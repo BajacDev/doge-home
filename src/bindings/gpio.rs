@@ -18,6 +18,7 @@ impl GpioPinAvailable {
     /// Return the BCM GPIO pin number of [GpioPinAvailable].
     fn to_bcm_gpio_pin_number(&self) -> usize {
         let bcm_pin_number : usize = (*self) as usize;
+        //TODO finish the check if possible ..
         assert!(bcm_pin_number<)
         
     }
@@ -32,7 +33,11 @@ impl GpioPinAvailable {
 pub struct GpioPin {
     bmc_gpio_pin_number: usize,
 }
-const GPIO_PINS_IS_TAKEN: [AtomicBool; gpio_controller::GPIO_SUPPORTED_NBRS] = [
+
+// We don't need that much atomic boolean as their is less GPIO avaiable on the rasbpery pi but
+// it is for simplicity. With this number of atomic boolean we can simply assign a GPIO the atomic boolean
+// at the position corresponding to his bcm number
+const GPIO_PINS_IS_TAKEN: [AtomicBool; gpio_controller::GPIO_MAX_BCM_NUMBER] = [
     AtomicBool::new(false),
     AtomicBool::new(false),
     AtomicBool::new(false),
@@ -59,12 +64,7 @@ const GPIO_PINS_IS_TAKEN: [AtomicBool; gpio_controller::GPIO_SUPPORTED_NBRS] = [
     AtomicBool::new(false),
     AtomicBool::new(false),
     AtomicBool::new(false),
-    AtomicBool::new(false),
-    AtomicBool::new(false),
-    AtomicBool::new(false),
-    AtomicBool::new(false),
-    AtomicBool::new(false),
-    AtomicBool::new(false),
+    AtomicBool::new(false)
 ];
 
 impl GpioPin {

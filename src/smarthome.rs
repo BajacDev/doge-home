@@ -24,6 +24,7 @@ pub struct SmartHome {
 }
 
 impl SmartHome {
+
     pub fn new() -> SmartHome {
         let mut gpio_controller = GpioController::get_the_gpio_controller();
         let gpio_output_pin = GpioOutputPin::new(
@@ -32,7 +33,7 @@ impl SmartHome {
         );
         return SmartHome {
             cli: CliState::new(),
-            tcp_server: TcpServer::new().unwrap(), // panic if failure
+            tcp_server: TcpServer::new().expect("could not create tcpServer"),
             tcp_connection: None,
             gpio_controller: gpio_controller,
             doorlock: DoorLock::new(gpio_output_pin),

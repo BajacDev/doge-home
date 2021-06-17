@@ -1,8 +1,9 @@
+//! Implementation of gpio pins, which is not thread safe.
+//! I.e. the use of this should only come from on thread, if no care to make it thread safe while using it is taken.
+//! We choose to not make it thread safe so that the minimum numbers of things has to be put in the trusted comupting base.
+
 pub mod gpio_controller;
 use gpio_controller::GpioController;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::assert;
-
 /// The enum type representing the avaiable Gpio for the rasbperry pi 4b.
 ///
 /// Each enum value is a Gpio that you can use in the rasbperry pi 4b.
@@ -38,14 +39,16 @@ pub enum GpioPinAvailable {
     Gpio12 = 12,
     Gpio16 = 16,
     Gpio20 = 20,
-    Gpio21 = 21
+    Gpio21 = 21,
 }
 
 impl GpioPinAvailable {
     /// Return the BCM GPIO pin number of [GpioPinAvailable].
     fn to_bcm_gpio_pin_number(&self) -> usize {
-        let bcm_pin_number : usize = (*self) as usize;
-        assert!(bcm_pin_number<=gpio_controller::GPIO_MAX_BCM_NUMBER_SUPPORTED);
+        let bcm_pin_number: usize = (*self) as usize;
+        if bcm_pin_number <= gpio_controller::GPIO_MAX_BCM_NUMBER_SUPPORTED {
+            panic!("There is a implementation error a bcm pin number is bigger than the max bcm pin number supported in the implemenation")
+        }
         bcm_pin_number
     }
 }
@@ -63,35 +66,8 @@ pub struct GpioPin {
 // We don't need that much atomic boolean as their is less GPIO avaiable on the rasbpery pi but
 // it is for simplicity. With this number of atomic boolean we can simply assign a GPIO the atomic boolean
 // at the position corresponding to his bcm number
-const GPIO_PINS_IS_TAKEN: [AtomicBool; gpio_controller::GPIO_MAX_BCM_NUMBER_SUPPORTED] = [
-    AtomicBool::new(false),
-    AtomicBool::new(false),
-    AtomicBool::new(false),
-    AtomicBool::new(false),
-    AtomicBool::new(false),
-    AtomicBool::new(false),
-    AtomicBool::new(false),
-    AtomicBool::new(false),
-    AtomicBool::new(false),
-    AtomicBool::new(false),
-    AtomicBool::new(false),
-    AtomicBool::new(false),
-    AtomicBool::new(false),
-    AtomicBool::new(false),
-    AtomicBool::new(false),
-    AtomicBool::new(false),
-    AtomicBool::new(false),
-    AtomicBool::new(false),
-    AtomicBool::new(false),
-    AtomicBool::new(false),
-    AtomicBool::new(false),
-    AtomicBool::new(false),
-    AtomicBool::new(false),
-    AtomicBool::new(false),
-    AtomicBool::new(false),
-    AtomicBool::new(false),
-    AtomicBool::new(false)
-];
+static mut GPIO_PINS_IS_TAKEN: [bool; gpio_controller::GPIO_MAX_BCM_NUMBER_SUPPORTED + 1] =
+    [false; gpio_controller::GPIO_MAX_BCM_NUMBER_SUPPORTED + 1];
 
 impl GpioPin {
     /// Return the associated [GpioPin] of the passed [GpioPinAvailable].
@@ -107,10 +83,13 @@ impl GpioPin {
     ///
     pub fn new(gpio_pin_wanted: &GpioPinAvailable) -> GpioPin {
         let bcm_gpio_pin_number = gpio_pin_wanted.to_bcm_gpio_pin_number();
-        GPIO_PINS_IS_TAKEN[bcm_gpio_pin_number]
-            .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)
-            .expect("Try to obtain multiple time a GpioPin with BCM pin number");
-
+        unsafe {
+            if GPIO_PINS_IS_TAKEN[bcm_gpio_pin_number] {
+                panic!("Try to obtain multiple time a GpioPin with BCM pin number")
+            } else {
+                GPIO_PINS_IS_TAKEN[bcm_gpio_pin_number] = true;
+            }
+        }
         GpioPin {
             bmc_gpio_pin_number: bcm_gpio_pin_number,
         }
@@ -119,9 +98,13 @@ impl GpioPin {
 
 impl Drop for GpioPin {
     fn drop(&mut self) {
-        GPIO_PINS_IS_TAKEN[self.bmc_gpio_pin_number]
-            .compare_exchange(true, false, Ordering::SeqCst, Ordering::SeqCst)
-            .expect("Try to release the a GpioPin, but was already release");
+        unsafe {
+            if GPIO_PINS_IS_TAKEN[self.bmc_gpio_pin_number] {
+                GPIO_PINS_IS_TAKEN[self.bmc_gpio_pin_number] = false;
+            } else {
+                panic!("Try to release the a GpioPin, but was already release")
+            }
+        }
     }
 }
 

@@ -1,6 +1,7 @@
 pub mod gpio_controller;
 use gpio_controller::GpioController;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::assert;
 
 /// The enum type representing the avaiable Gpio
 ///
@@ -16,7 +17,9 @@ pub enum GpioPinAvailable {
 impl GpioPinAvailable {
     /// Return the BCM GPIO pin number of [GpioPinAvailable].
     fn to_bcm_gpio_pin_number(&self) -> usize {
-        (*self) as usize
+        let bcm_pin_number : usize = (*self) as usize;
+        assert!(bcm_pin_number<)
+        
     }
 }
 
@@ -63,6 +66,7 @@ const GPIO_PINS_IS_TAKEN: [AtomicBool; gpio_controller::GPIO_SUPPORTED_NBRS] = [
     AtomicBool::new(false),
     AtomicBool::new(false),
 ];
+
 impl GpioPin {
     /// Return the associated [GpioPin] of the passed [GpioPinAvailable].
     ///

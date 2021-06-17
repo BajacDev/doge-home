@@ -30,15 +30,16 @@ const GPIO_MEM_SIZE_REQUIRED_FROM_GLOBAL_OFFSET: usize = GPCLR0_OFFSET
         });
 /// GPIO Function Select 0 relative offset.
 const GPFSEL0_OFFSET: usize = 0x00;
-const GPFSEL_NUMBER_PIN_PER_REGISTER: usize = 10;
+const GPFSEL_NUNBERS_GPIO_PER_REGISTER : usize = 10;
+const GPSEL_NUMBERS_BITS_PER_GPIO : usize = 3;
+// There is only 3 bit to set per GPIO
+const GPSEL_OUTPUT_MODE_BITS_CONFIGURATION: u32 = 0b001;
 /// GPIO Pin Output Set 0 relative offset.
 const GPSET0_OFFSET: usize = 0x1c;
-const GPSET_NUMBER_PIN_PER_REGISTER: usize = 32;
+const GPSET_NUMBERS_GPIO_PER_REGISTER: usize = 32;
 /// GPIO Pin Output Clear 0 relative offset.
 const GPCLR0_OFFSET: usize = 0x28;
-const GPCLR_NUMBER_PIN_PER_REGISTER: usize = 32;
-// There is only 3 bit to set per GPIO
-const OUTPUT_MODE_BITS_CONFIGURATION: u32 = 0b001;
+const GPCLR_NUMBERS_GPIO_PER_REGISTER: usize = 32;
 
 // Use in combination with [get_the_gpio_controller] to make sure only one instance of this structure is created within the process
 const GPIO_CONTROLLER_IS_TAKEN: AtomicBool = AtomicBool::new(false);
@@ -109,7 +110,7 @@ impl GpioController {
             .write(true)
             .custom_flags(O_SYNC)
             .open(PATH_DEV_GPIOMEM)
-            .expect("Problem opening the file /dev/gpiomem");
+            .unwrap_or_else(|_| panic!("Problem opening the file {}", PATH_DEV_GPIOMEM));
         // Memory-map /dev/gpiomem at offset 0
         let gpiomem_ptr = unsafe {
             libc::mmap(
@@ -123,7 +124,7 @@ impl GpioController {
         };
 
         if gpiomem_ptr == MAP_FAILED {
-            panic!("Could not map the file /dev/gpiomem to user space");
+            panic!("Could not map the file {} to user space", PATH_DEV_GPIOMEM);
         }
 
         gpiomem_ptr as *mut u32
@@ -157,9 +158,9 @@ impl GpioController {
     ///
     #[inline(always)]
     pub fn set_high(&mut self, gpio_output_pin: &mut GpioOutputPin) {
-        let offset = (GPSET0_OFFSET + gpio_output_pin.bcm_gpio_pin_number as usize)
-            / GPSET_NUMBER_PIN_PER_REGISTER;
-        let shift = gpio_output_pin.bcm_gpio_pin_number % GPSET_NUMBER_PIN_PER_REGISTER;
+        //TODO remove those calculation since we only work with 32 gpio i.e. support 32
+        let offset = GPSET0_OFFSET + gpio_output_pin.bcm_gpio_pin_number / GPSET_NUMBERS_GPIO_PER_REGISTER;
+        let shift = gpio_output_pin.bcm_gpio_pin_number % GPSET_NUMBERS_GPIO_PER_REGISTER;
         self.write(offset, 1 << shift);
     }
 
@@ -176,8 +177,8 @@ impl GpioController {
     #[inline(always)]
     pub fn set_low(&mut self, gpio_output_pin: &mut GpioOutputPin) {
         let offset =
-            (GPCLR0_OFFSET + gpio_output_pin.bcm_gpio_pin_number) / GPCLR_NUMBER_PIN_PER_REGISTER;
-        let shift = gpio_output_pin.bcm_gpio_pin_number % GPCLR_NUMBER_PIN_PER_REGISTER;
+            (GPCLR0_OFFSET + gpio_output_pin.bcm_gpio_pin_number) / GPCLR_NUMBERS_GPIO_PER_REGISTER;
+        let shift = gpio_output_pin.bcm_gpio_pin_number % GPCLR_NUMBERS_GPIO_PER_REGISTER;
 
         self.write(offset, 1 << shift);
     }
@@ -197,13 +198,12 @@ impl GpioController {
     ///
     #[inline(always)]
     pub fn set_output_mode(&mut self, gpio_pin: &mut GpioOutputPin) {
-        let offset = (GPFSEL0_OFFSET + gpio_pin.bcm_gpio_pin_number as usize)
-            / GPFSEL_NUMBER_PIN_PER_REGISTER;
-        let shift = (gpio_pin.bcm_gpio_pin_number % GPFSEL_NUMBER_PIN_PER_REGISTER) * 3;
+        let offset = GPFSEL0_OFFSET + gpio_pin.bcm_gpio_pin_number / GPFSEL_NUNBERS_GPIO_PER_REGISTER;
+        let shift = (gpio_pin.bcm_gpio_pin_number % GPFSEL_NUNBERS_GPIO_PER_REGISTER) * GPSEL_NUMBERS_BITS_PER_GPIO;
         let reg_value = self.read(offset);
         self.write(
             offset,
-            (reg_value & !(0b111 << shift)) | ((OUTPUT_MODE_BITS_CONFIGURATION) << shift),
+            (reg_value & !(0b111 << shift)) | ((GPSEL_OUTPUT_MODE_BITS_CONFIGURATION) << shift),
         );
     }
 }

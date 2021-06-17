@@ -70,11 +70,11 @@ impl SmartHome {
             }
             Message::TcpRead(size, vec) => {
                 println!("receive {:?} bytes: {:?}", size, vec);
-                if vec[0] == 49 { // check if received "1" from tcp client
+                if vec[0] == 49 {
+                    // check if received "1" from tcp client
                     self.doorlock.toggle(&mut self.gpio_controller);
-                 }
- 
-             },
+                }
+            }
 
             Message::None => {}
         }

@@ -20,13 +20,14 @@ use libc::{self, c_void, size_t, MAP_FAILED, MAP_SHARED, O_SYNC, PROT_READ, PROT
 const PATH_DEV_GPIOMEM: &str = "/dev/gpiomem";
 // The rasbperry pi has as the max bcm number for a GPIO that it offer 27. This should not confuse with what the BCM2711 offer.
 pub const GPIO_MAX_BCM_NUMBER_SUPPORTED: usize = 27;
-const GPIO_MEM_SIZE_REQUIRED_FROM_GLOBAL_OFFSET: usize = (GPCLR0_OFFSET/std::mem::size_of::<u32>())
-+ (GPIO_MAX_BCM_NUMBER_SUPPORTED / std::mem::size_of::<u32>()
-    + if GPIO_MAX_BCM_NUMBER_SUPPORTED % std::mem::size_of::<u32>() != 0 {
-        1
-    } else {
-        0
-    });
+const GPIO_MEM_SIZE_REQUIRED_FROM_GLOBAL_OFFSET: usize = (GPCLR0_OFFSET
+    / std::mem::size_of::<u32>())
+    + (GPIO_MAX_BCM_NUMBER_SUPPORTED / std::mem::size_of::<u32>()
+        + if GPIO_MAX_BCM_NUMBER_SUPPORTED % std::mem::size_of::<u32>() != 0 {
+            1
+        } else {
+            0
+        });
 /// GPIO Function Select 0 relative offset.offset
 const GPFSEL0_OFFSET: usize = 0x00;
 const GPFSEL_NUNBERS_GPIO_PER_REGISTER: usize = 10;

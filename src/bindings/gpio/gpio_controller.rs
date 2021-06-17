@@ -20,13 +20,13 @@ use libc::{self, c_void, size_t, MAP_FAILED, MAP_SHARED, O_SYNC, PROT_READ, PROT
 const PATH_DEV_GPIOMEM: &str = "/dev/gpiomem";
 // The rasbperry pi has as the max bcm number for a GPIO that it offer 27. This should not confuse with what the BCM2711 offer.
 pub const GPIO_MAX_BCM_NUMBER_SUPPORTED: usize = 27;
-const GPIO_MEM_SIZE_REQUIRED_FROM_GLOBAL_OFFSET: usize = GPCLR0_OFFSET
-    + (GPIO_MAX_BCM_NUMBER_SUPPORTED / std::mem::size_of::<u32>()
-        + if GPIO_MAX_BCM_NUMBER_SUPPORTED % std::mem::size_of::<u32>() != 0 {
-            1
-        } else {
-            0
-        });
+const GPIO_MEM_SIZE_REQUIRED_FROM_GLOBAL_OFFSET: usize = (GPCLR0_OFFSET/std::mem::size_of::<u32>())
++ (GPIO_MAX_BCM_NUMBER_SUPPORTED / std::mem::size_of::<u32>()
+    + if GPIO_MAX_BCM_NUMBER_SUPPORTED % std::mem::size_of::<u32>() != 0 {
+        1
+    } else {
+        0
+    });
 /// GPIO Function Select 0 relative offset.offset
 const GPFSEL0_OFFSET: usize = 0x00;
 const GPFSEL_NUNBERS_GPIO_PER_REGISTER: usize = 10;
@@ -34,10 +34,10 @@ const GPSEL_NUMBERS_BITS_PER_GPIO: usize = 3;
 // There is only 3 bit to set per GPIO
 const GPSEL_OUTPUT_MODE_BITS_CONFIGURATION: u32 = 0b001;
 /// GPIO Pin Output Set 0 relative offset.
-const GPSET0_OFFSET: usize = 0x1c;
+const GPSET0_OFFSET: usize = 0x1c / std::mem::size_of::<u32>();
 const GPSET_NUMBERS_GPIO_PER_REGISTER: usize = 32;
 /// GPIO Pin Output Clear 0 relative offset.
-const GPCLR0_OFFSET: usize = 0x28;
+const GPCLR0_OFFSET: usize = 0x28 / std::mem::size_of::<u32>();
 const GPCLR_NUMBERS_GPIO_PER_REGISTER: usize = 32;
 
 // Use in combination with [get_the_gpio_controller] to make sure only one instance of this structure is created within the process

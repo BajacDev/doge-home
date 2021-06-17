@@ -26,7 +26,7 @@ impl DoorLock {
     /// new(gpio_pin).open();
     pub fn open(&mut self, gpio_controller: &mut GpioController) {
         self.is_open = true;
-        gpio_controller.set_high(&mut self.gpio_output_pin)
+        gpio_controller.set_high(&mut self.gpio_output_pin);
     }
 
     /// Close the DoorLock on which it is called.
@@ -37,7 +37,7 @@ impl DoorLock {
     /// new(gpio_pin).close();
     pub fn close(&mut self, gpio_controller: &mut GpioController) {
         self.is_open = false;
-        gpio_controller.set_low(&mut self.gpio_output_pin)
+        gpio_controller.set_low(&mut self.gpio_output_pin);
     }
 
     /// Toggle the DoorLock on which it is called

@@ -46,7 +46,7 @@ impl GpioPinAvailable {
     /// Return the BCM GPIO pin number of [GpioPinAvailable].
     fn to_bcm_gpio_pin_number(&self) -> usize {
         let bcm_pin_number: usize = (*self) as usize;
-        if bcm_pin_number <= gpio_controller::GPIO_MAX_BCM_NUMBER_SUPPORTED {
+        if bcm_pin_number > gpio_controller::GPIO_MAX_BCM_NUMBER_SUPPORTED {
             panic!("There is a implementation error a bcm pin number is bigger than the max bcm pin number supported in the implemenation")
         }
         bcm_pin_number

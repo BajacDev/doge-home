@@ -1,8 +1,8 @@
 use crate::bindings::cli::*;
 use crate::bindings::gpio::gpio_controller::GpioController;
 use crate::bindings::gpio::*;
-use crate::bindings::tcpconnection::*;
-use crate::bindings::tcpserver::*;
+use crate::bindings::tcp_connection::*;
+use crate::bindings::tcp_server::*;
 use crate::devices::doorlock::DoorLock;
 use crate::event::Event;
 

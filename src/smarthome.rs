@@ -1,10 +1,10 @@
 use crate::bindings::cli::*;
 use crate::bindings::gpio::gpio_controller::GpioController;
 use crate::bindings::gpio::*;
-use crate::bindings::message::*;
 use crate::bindings::tcpconnection::*;
 use crate::bindings::tcpserver::*;
 use crate::devices::doorlock::DoorLock;
+use crate::event::Event;
 
 use std::{thread, time};
 
@@ -42,33 +42,33 @@ impl SmartHome {
 
     pub fn start(&mut self) {
         loop {
-            // receive messages from all bindings and process them
-            let mut message = self.cli.fetch();
-            self.process_message(message);
-            message = self.tcp_server.fetch();
-            self.process_message(message);
+            // receive events from all bindings and process them
+            let mut event = self.cli.fetch();
+            self.process_event(event);
+            event = self.tcp_server.fetch();
+            self.process_event(event);
             if let Some(connection) = &mut self.tcp_connection {
-                message = connection.fetch();
-                self.process_message(message);
+                event = connection.fetch();
+                self.process_event(event);
             }
             sleep(100);
         }
     }
 
-    fn process_message(&mut self, message: Message) {
-        match message {
-            Message::KeyPressed => {
+    fn process_event(&mut self, event: Event) {
+        match event {
+            Event::KeyPressed => {
                 self.doorlock.toggle(&mut self.gpio_controller);
             }
-            Message::TcpListenerAccept(stream, addr) => {
+            Event::TcpListenerAccept(stream, addr) => {
                 println!("new connection at {}", addr);
                 self.tcp_connection = Some(TcpConnection::new(stream).unwrap())
             }
-            Message::TcpEnd => {
+            Event::TcpEnd => {
                 println!("connection end");
                 self.tcp_connection = None;
             }
-            Message::TcpRead(size, vec) => {
+            Event::TcpRead(size, vec) => {
                 println!("receive {:?} bytes: {:?}", size, vec);
                 if vec[0] == 49 {
                     // check if received "1" from tcp client
@@ -76,7 +76,7 @@ impl SmartHome {
                 }
             }
 
-            Message::None => {}
+            Event::None => {}
         }
         sleep(100);
     }

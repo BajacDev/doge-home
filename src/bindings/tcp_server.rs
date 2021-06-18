@@ -1,4 +1,4 @@
-use crate::bindings::message::Message;
+use crate::event::Event;
 use std::net::TcpListener;
 use std::net::{SocketAddr, TcpStream};
 use std::sync::mpsc;
@@ -26,10 +26,10 @@ impl TcpServer {
         })
     }
 
-    pub fn fetch(&mut self) -> Message {
+    pub fn fetch(&mut self) -> Event {
         match self.stream_channel.try_recv() {
-            Ok((socket, addr)) => Message::TcpListenerAccept(socket, addr),
-            _ => Message::None,
+            Ok((socket, addr)) => Event::TcpListenerAccept(socket, addr),
+            _ => Event::None,
         }
     }
 }

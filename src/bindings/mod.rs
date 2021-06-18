@@ -1,5 +1,4 @@
 pub mod cli;
 pub mod gpio;
-pub mod message;
-pub mod tcpconnection;
-pub mod tcpserver;
+pub mod tcp_connection;
+pub mod tcp_server;

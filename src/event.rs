@@ -1,9 +1,8 @@
 use std::net::{SocketAddr, TcpStream};
 use std::vec::Vec;
 
-// Messages that can be fetched from all bindings
-// Those messages are events
-pub enum Message {
+// Events that can be fetched from all bindings
+pub enum Event {
     None,
     KeyPressed,
 

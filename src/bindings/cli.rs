@@ -2,7 +2,7 @@ use std::io;
 use std::sync::mpsc;
 use std::sync::mpsc::Receiver;
 
-use crate::bindings::message::Message;
+use crate::event::Event;
 use std::thread;
 
 pub struct CliState {
@@ -23,10 +23,10 @@ impl CliState {
         }
     }
 
-    pub fn fetch(&mut self) -> Message {
+    pub fn fetch(&mut self) -> Event {
         match self.stdin_channel.try_recv() {
-            Ok(_key) => Message::KeyPressed,
-            _ => Message::None,
+            Ok(_key) => Event::KeyPressed,
+            _ => Event::None,
         }
     }
 }

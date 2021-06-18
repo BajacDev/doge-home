@@ -1,4 +1,4 @@
-use crate::bindings::message::Message;
+use crate::event::Event;
 use std::io::prelude::*;
 use std::net::TcpStream;
 use std::sync::mpsc;
@@ -19,7 +19,7 @@ impl TcpConnection {
             let mut buf = vec![0u8; BUFFER_SIZE];
             match stream.read(&mut buf) {
                 Ok(size) => match sender.send((size, buf)) {
-                    Err(_) => break, // the stream has been deleted (TcpEnd message)
+                    Err(_) => break, // the stream has been deleted (TcpEnd event)
                     _ => (),
                 },
                 _ => (),
@@ -29,11 +29,11 @@ impl TcpConnection {
         Ok(TcpConnection { receiver: receiver })
     }
 
-    pub fn fetch(&mut self) -> Message {
+    pub fn fetch(&mut self) -> Event {
         match self.receiver.try_recv() {
-            Ok((size, _buf)) if size == 0 => Message::TcpEnd, // todo is this equivalent to a connection end
-            Ok((size, buf)) => Message::TcpRead(size, buf),
-            _ => Message::None,
+            Ok((size, _buf)) if size == 0 => Event::TcpEnd, // todo is this equivalent to a connection end
+            Ok((size, buf)) => Event::TcpRead(size, buf),
+            _ => Event::None,
         }
     }
 }

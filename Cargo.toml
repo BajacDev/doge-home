@@ -16,6 +16,9 @@ path = "src/lib.rs"
 [dependencies]
 libc = "0.2"
 
+[dev-dependencies]
+proptest = "1.0.0"
+
 # klee dependencies
 
 [dependencies.klee-sys]

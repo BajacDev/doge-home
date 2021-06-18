@@ -61,18 +61,23 @@ The `deploy.sh` script compile, deploy, and execute the binary on the targeted r
 
 ### Unit test
 
+Tests can be found in `tests/`
+
+use
 `cargo test --tests` 
 Nothing is tested yet.
 
 ### klee tests
 
+Klee tests can be found in `examples/`
+
 To simplify klee installation, we will use the `rust-klee-docker`: <https://github.com/BajacDev/rust-klee-docker>
 
 ```
-docker run --rm -it -v /path/to/doge-home:/home/arch/doge-home rkd
+docker run --rm -it -v /host/path/to/doge-home:/home/ubuntu/doge-home rkd
 ```
 
-then, in the conatainer:
+then, in the container:
 
 ```
 cd doge-home

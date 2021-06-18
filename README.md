@@ -59,8 +59,27 @@ The `deploy.sh` script compile, deploy, and execute the binary on the targeted r
 
 ## Running the tests
 
-`cargo test` 
+### Unit test
+
+`cargo test --tests` 
 Nothing is tested yet.
+
+### klee tests
+
+To simplify klee installation, we will use the `rust-klee-docker`: <https://github.com/BajacDev/rust-klee-docker>
+
+```
+docker run --rm -it -v /path/to/doge-home:/home/arch/doge-home rkd
+```
+
+then, in the conatainer:
+
+```
+cd doge-home
+cargo klee --example it_crashes
+```
+
+This should yield `KLEE: ERROR: examples/it_crashes.rs:17: abort failure`
 
 ## Contributing
 

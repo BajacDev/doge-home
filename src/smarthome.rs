@@ -73,6 +73,9 @@ impl SmartHome {
                 if vec[0] == 49 {
                     // check if received "1" from tcp client
                     self.doorlock.toggle(&mut self.gpio_controller);
+                } else if vec[0] == 48 {
+                    // check if received "0" from tcp client
+                    self.doorlock.open(&mut self.gpio_controller);
                 }
             }
 

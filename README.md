@@ -4,6 +4,8 @@
 
 A 100% secure smart home written in rust for the raspberry pi
 
+The companion app can be found at [doge-home-app](https://github.com/tberkane/doge-home-app).
+
 ## Getting Started
 
 ### Emulate the raspberi pi 1

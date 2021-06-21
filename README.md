@@ -75,13 +75,19 @@ Klee tests can be found in `examples/`
 
 To simplify klee installation, we will use the `rust-klee-docker`: <https://github.com/BajacDev/rust-klee-docker>
 
-```
+```bash
 docker run --rm -it -v /host/path/to/doge-home:/home/ubuntu/doge-home rkd
+```
+
+or in `doge_home/` root directory:
+
+```bash
+docker run --rm -it -v $PWD:/home/ubuntu/doge-home rkd
 ```
 
 then, in the container:
 
-```
+```bash
 cd doge-home
 cargo klee --example it_crashes
 ```

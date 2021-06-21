@@ -14,29 +14,40 @@ fn sleep(millis: u64) {
 
 pub struct SmartHome {
     // bindings:
-    // should appear stateless from the smart home
-    cli: CliState,
-    tcp_binding: TcpBinding,
-    gpio_controller: GpioController,
-    gpio_output_pin: GpioOutputPin,
+    // Option None is for testing only
+    pub cli: Option<CliState>,
+    pub tcp_binding: Option<TcpBinding>,
+    pub gpio_controller: Option<GpioController>,
+    pub gpio_output_pin: Option<GpioOutputPin>,
 
     // devices ie smart home state:
-    doorlock: DoorLock,
+    pub doorlock: DoorLock,
 }
 
 impl SmartHome {
-    pub fn new() -> SmartHome {
+    pub fn new() -> Self {
         let mut gpio_controller = GpioController::get_the_gpio_controller();
 
         let gpio_output_pin = GpioOutputPin::new(
             GpioPin::new(&GpioPinAvailable::Gpio21),
             &mut gpio_controller,
         );
+
         return SmartHome {
-            cli: CliState::new(),
-            tcp_binding: TcpBinding::new().expect("could not create tcpServer"),
-            gpio_controller: gpio_controller,
-            gpio_output_pin: gpio_output_pin,
+            cli: Some(CliState::new()),
+            tcp_binding: Some(TcpBinding::new().expect("could not create tcpServer")),
+            gpio_controller: Some(gpio_controller),
+            gpio_output_pin: Some(gpio_output_pin),
+            doorlock: DoorLock::new(),
+        };
+    }
+
+    pub fn new_fake() -> Self {
+        return SmartHome {
+            cli: None,
+            tcp_binding: None,
+            gpio_controller: None,
+            gpio_output_pin: None,
             doorlock: DoorLock::new(),
         };
     }
@@ -44,19 +55,19 @@ impl SmartHome {
     pub fn start(&mut self) {
         loop {
             // receive events from all bindings and process them
-            let mut event = self.cli.fetch();
+            let mut event = self.cli.as_mut().unwrap().fetch();
             self.process_event(event);
-            event = self.tcp_binding.fetch();
+            event = self.tcp_binding.as_mut().unwrap().fetch();
             self.process_event(event);
             sleep(100);
         }
     }
 
-    fn process_event(&mut self, event: Event) {
+    pub fn process_event(&mut self, event: Event) {
         match event {
             Event::KeyPressed => {
                 self.doorlock
-                    .toggle(&mut self.gpio_controller, &mut self.gpio_output_pin);
+                    .toggle(self.gpio_controller.as_mut(), self.gpio_output_pin.as_mut());
             }
             Event::TcpNewConnection(addr) => {
                 println!("new connection at {}", addr);
@@ -69,11 +80,11 @@ impl SmartHome {
                 if vec[0] == 49 {
                     // check if received "1" from tcp client
                     self.doorlock
-                        .toggle(&mut self.gpio_controller, &mut self.gpio_output_pin);
+                        .toggle(self.gpio_controller.as_mut(), self.gpio_output_pin.as_mut());
                 } else if vec[0] == 48 {
                     // check if received "0" from tcp client
                     self.doorlock
-                        .open(&mut self.gpio_controller, &mut self.gpio_output_pin);
+                        .open(self.gpio_controller.as_mut(), self.gpio_output_pin.as_mut());
                 }
             }
 

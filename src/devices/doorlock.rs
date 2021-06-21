@@ -3,7 +3,6 @@ use crate::bindings::gpio::GpioOutputPin;
 
 pub struct DoorLock {
     is_open: bool,
-    gpio_output_pin: GpioOutputPin,
 }
 
 impl DoorLock {
@@ -11,22 +10,23 @@ impl DoorLock {
     ///
     /// ### Examples
     ///
-    /// let mut door_lock = new(gpio_pin);
-    pub fn new(gpio_pin_ouput: GpioOutputPin) -> Self {
-        DoorLock {
-            is_open: false,
-            gpio_output_pin: gpio_pin_ouput,
-        }
+    /// let mut door_lock = new();
+    pub fn new() -> Self {
+        DoorLock { is_open: false }
     }
 
     /// Open the DoorLock on which it is called.
     ///
     /// ### Examples
     ///
-    /// new(gpio_pin).open();
-    pub fn open(&mut self, gpio_controller: &mut GpioController) {
+    /// new().open();
+    pub fn open(
+        &mut self,
+        gpio_controller: &mut GpioController,
+        gpio_output_pin: &mut GpioOutputPin,
+    ) {
         self.is_open = true;
-        gpio_controller.set_high(&mut self.gpio_output_pin);
+        gpio_controller.set_high(gpio_output_pin);
     }
 
     /// Close the DoorLock on which it is called.
@@ -34,10 +34,14 @@ impl DoorLock {
     /// ### Examples
     ///
     ///
-    /// new(gpio_pin).close();
-    pub fn close(&mut self, gpio_controller: &mut GpioController) {
+    /// new().close();
+    pub fn close(
+        &mut self,
+        gpio_controller: &mut GpioController,
+        gpio_output_pin: &mut GpioOutputPin,
+    ) {
         self.is_open = false;
-        gpio_controller.set_low(&mut self.gpio_output_pin);
+        gpio_controller.set_low(gpio_output_pin);
     }
 
     /// Toggle the DoorLock on which it is called
@@ -47,12 +51,16 @@ impl DoorLock {
     ///
     /// ### Examples
     ///
-    /// new(gpio_pin).toggle();
-    pub fn toggle(&mut self, gpio_controller: &mut GpioController) {
+    /// new().toggle();
+    pub fn toggle(
+        &mut self,
+        gpio_controller: &mut GpioController,
+        gpio_output_pin: &mut GpioOutputPin,
+    ) {
         if self.is_open {
-            self.close(gpio_controller);
+            self.close(gpio_controller, gpio_output_pin);
         } else {
-            self.open(gpio_controller);
+            self.open(gpio_controller, gpio_output_pin);
         }
     }
 }

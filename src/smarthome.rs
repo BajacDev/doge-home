@@ -1,8 +1,7 @@
 use crate::bindings::cli::*;
 use crate::bindings::gpio::gpio_controller::GpioController;
 use crate::bindings::gpio::*;
-use crate::bindings::tcp_connection::*;
-use crate::bindings::tcp_server::*;
+use crate::bindings::tcp_binding::*;
 use crate::devices::doorlock::DoorLock;
 use crate::event::Event;
 
@@ -15,11 +14,13 @@ fn sleep(millis: u64) {
 
 pub struct SmartHome {
     // bindings:
+    // should appear stateless from the smart home
     cli: CliState,
-    tcp_server: TcpServer,
-    tcp_connection: Option<TcpConnection>,
+    tcp_binding: TcpBinding,
     gpio_controller: GpioController,
-    // devices:
+    gpio_output_pin: GpioOutputPin,
+
+    // devices ie smart home state:
     doorlock: DoorLock,
 }
 
@@ -33,10 +34,10 @@ impl SmartHome {
         );
         return SmartHome {
             cli: CliState::new(),
-            tcp_server: TcpServer::new().expect("could not create tcpServer"),
-            tcp_connection: None,
+            tcp_binding: TcpBinding::new().expect("could not create tcpServer"),
             gpio_controller: gpio_controller,
-            doorlock: DoorLock::new(gpio_output_pin),
+            gpio_output_pin: gpio_output_pin,
+            doorlock: DoorLock::new(),
         };
     }
 
@@ -45,12 +46,8 @@ impl SmartHome {
             // receive events from all bindings and process them
             let mut event = self.cli.fetch();
             self.process_event(event);
-            event = self.tcp_server.fetch();
+            event = self.tcp_binding.fetch();
             self.process_event(event);
-            if let Some(connection) = &mut self.tcp_connection {
-                event = connection.fetch();
-                self.process_event(event);
-            }
             sleep(100);
         }
     }
@@ -58,28 +55,29 @@ impl SmartHome {
     fn process_event(&mut self, event: Event) {
         match event {
             Event::KeyPressed => {
-                self.doorlock.toggle(&mut self.gpio_controller);
+                self.doorlock
+                    .toggle(&mut self.gpio_controller, &mut self.gpio_output_pin);
             }
-            Event::TcpListenerAccept(stream, addr) => {
+            Event::TcpNewConnection(addr) => {
                 println!("new connection at {}", addr);
-                self.tcp_connection = Some(TcpConnection::new(stream).unwrap())
             }
             Event::TcpEnd => {
                 println!("connection end");
-                self.tcp_connection = None;
             }
             Event::TcpRead(size, vec) => {
                 println!("receive {:?} bytes: {:?}", size, vec);
                 if vec[0] == 49 {
                     // check if received "1" from tcp client
-                    self.doorlock.toggle(&mut self.gpio_controller);
+                    self.doorlock
+                        .toggle(&mut self.gpio_controller, &mut self.gpio_output_pin);
                 } else if vec[0] == 48 {
                     // check if received "0" from tcp client
-                    self.doorlock.open(&mut self.gpio_controller);
+                    self.doorlock
+                        .open(&mut self.gpio_controller, &mut self.gpio_output_pin);
                 }
             }
 
-            Event::None => {}
+            _ => {}
         }
         sleep(100);
     }

@@ -79,6 +79,5 @@ impl SmartHome {
 
             _ => {}
         }
-        sleep(100);
     }
 }

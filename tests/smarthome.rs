@@ -2,8 +2,8 @@ use proptest::prelude::*;
 
 extern crate doge_home;
 pub use doge_home::devices::doorlock::DoorLock;
-pub use doge_home::smarthome::SmartHome;
 pub use doge_home::event::Event;
+pub use doge_home::smarthome::SmartHome;
 
 proptest! {
   #[test]

@@ -76,11 +76,9 @@ impl SmartHome {
                 println!("connection end");
             }
             Event::TcpRead(size, vec) => {
-
-                
                 println!("receive {:?} bytes: {:?}", size, vec);
                 if size == 0 {
-                    return
+                    return;
                 }
                 if vec[0] == 49 {
                     // check if received "1" from tcp client

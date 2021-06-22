@@ -7,6 +7,7 @@ pub enum Event {
     KeyPressed,
 
     TcpListenerAccept(TcpStream, SocketAddr),
+    TcpNewConnection(SocketAddr),
     TcpRead(usize, Vec<u8>),
     TcpEnd,
 }

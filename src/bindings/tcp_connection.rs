@@ -10,7 +10,7 @@ pub struct TcpConnection {
     receiver: Receiver<(usize, Vec<u8>)>,
 }
 
-const BUFFER_SIZE: usize = 64;
+pub const BUFFER_SIZE: usize = 64;
 
 impl TcpConnection {
     pub fn new(mut stream: TcpStream) -> std::io::Result<Self> {
